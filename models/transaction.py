@@ -1,21 +1,24 @@
 """
-Transaction klasė reprezentuoja lėšų pervedimą tarp dviejų adresų.
-
-Laukai:
-- sender_key: siuntėjo public_key
-- receiver_key: gavėjo public_key
-- amount: kiek pinigų siunčiama
-- timestamp: kada transakcija sukurta (epoch sekundėmis)
-- tx_id: transakcijos identifikatorius (maišos reikšmė pagal kitus laukus)
-
-transaction_id = hash(sender, receiver, amount, timestamp)
+Transaction model for blockchain transactions.
 """
 
 import time
+import uuid
 from hash_utils import my_hash
 
+
 class Transaction:
+    """Represents a transaction between two users."""
+    
     def __init__(self, sender_key: str, receiver_key: str, amount: int):
+        """
+        Initialize a new transaction.
+        
+        Args:
+            sender_key: Public key of sender
+            receiver_key: Public key of receiver
+            amount: Amount to transfer
+        """
         self.tx_id = str(uuid.uuid4())
         self.sender_key = sender_key
         self.receiver_key = receiver_key
@@ -26,7 +29,12 @@ class Transaction:
         self._hash = self._calculate_hash()
     
     def _calculate_hash(self) -> str:
-        """Calculate the transaction hash."""
+        """
+        Calculate the transaction hash.
+        
+        Returns:
+            64-character hex hash string
+        """
         data = (
             self.tx_id +
             self.sender_key +
@@ -37,7 +45,12 @@ class Transaction:
         return my_hash(data)
     
     def get_hash(self) -> str:
-        """Get the transaction hash."""
+        """
+        Get the transaction hash.
+        
+        Returns:
+            Transaction hash
+        """
         return self._hash
     
     def verify_hash(self) -> bool:
@@ -74,3 +87,11 @@ class Transaction:
             print(f"         Sender has: {sender_balance}, needs: {self.amount}")
         
         return is_valid
+    
+    def __repr__(self) -> str:
+        return (
+            f"Transaction(id={self.tx_id[:8]}..., "
+            f"from={self.sender_key[:8]}..., "
+            f"to={self.receiver_key[:8]}..., "
+            f"amount={self.amount})"
+        )

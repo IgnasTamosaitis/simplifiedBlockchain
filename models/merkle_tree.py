@@ -61,7 +61,12 @@ class MerkleTree:
         print(f"[MERKLE] Root hash: {self.root[:32]}...\n")
     
     def get_root(self) -> str:
-        """Get the Merkle root hash."""
+        """
+        Get the Merkle root hash.
+        
+        Returns:
+            Merkle root hash or "0"*64 if no transactions
+        """
         return self.root if self.root else "0" * 64
     
     def verify_transaction(self, tx_id: str, proof: List[tuple]) -> bool:
@@ -119,3 +124,6 @@ class MerkleTree:
             index //= 2
         
         return proof
+    
+    def __repr__(self) -> str:
+        return f"MerkleTree(transactions={len(self.transaction_ids)}, root={self.root[:16] if self.root else 'None'}...)"

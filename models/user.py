@@ -1,30 +1,47 @@
-from dataclasses import dataclass
-from typing import List
-import random
-from hash_utils import my_hash
+"""
+User model for blockchain participants.
+"""
 
 
-@dataclass
 class User:
-    name: str
-    public_key: str
-    balance: int
-
-    def debit(self, amount: int) -> None:
-        self.balance -= amount
-
+    """Represents a user in the blockchain system."""
+    
+    def __init__(self, name: str, public_key: str, balance: int = 0):
+        """
+        Initialize a new user.
+        
+        Args:
+            name: User's display name
+            public_key: Unique public key identifier
+            balance: Initial balance (default 0)
+        """
+        self.name = name
+        self.public_key = public_key
+        self.balance = balance
+    
     def credit(self, amount: int) -> None:
+        """
+        Add funds to user's balance.
+        
+        Args:
+            amount: Amount to add
+        """
+        if amount < 0:
+            raise ValueError("Cannot credit negative amount")
         self.balance += amount
-
+    
+    def debit(self, amount: int) -> None:
+        """
+        Subtract funds from user's balance.
+        
+        Args:
+            amount: Amount to subtract
+        """
+        if amount < 0:
+            raise ValueError("Cannot debit negative amount")
+        if amount > self.balance:
+            raise ValueError(f"Insufficient balance: has {self.balance}, needs {amount}")
+        self.balance -= amount
+    
     def __repr__(self) -> str:
         return f"User(name={self.name}, key={self.public_key[:8]}..., balance={self.balance})"
-
-
-def generate_users(n: int = 1000, min_balance: int = 100, max_balance: int = 1_000_000) -> List[User]:
-    users: List[User] = []
-    for i in range(n):
-        name = f"user_{i:04d}"
-        public_key = my_hash(f"pk::{name}")
-        balance = random.randint(min_balance, max_balance)
-        users.append(User(name=name, public_key=public_key, balance=balance))
-    return users
