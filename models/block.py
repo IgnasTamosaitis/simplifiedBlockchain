@@ -1,119 +1,194 @@
-from __future__ import annotations
-from dataclasses import dataclass, field, asdict
-from typing import List, TYPE_CHECKING
-import json
+"""
+Block and BlockHeader models for blockchain.
+"""
+
 import time
-
+from typing import List, Optional
 from hash_utils import my_hash
-
-if TYPE_CHECKING:
-    # Tik tipų tikrinimui; kad išvengt import cycle runtime metu
-    from models.transaction import Transaction
+from models.transaction import Transaction
+from models.merkle_tree import MerkleTree
 
 
-def _json_canonical(obj) -> str:
-    """
-    Paverčia dict'ą į deterministinį JSON (rūšiuoti raktai, nėra tarpų),
-    kad hash rezultatas būtų stabilus.
-    """
-    return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
-
-
-def merkle_root_simple(tx_ids: List[str]) -> str:
-    """
-    Supaprastinta Merkle šaknis:
-    tiesiog sujungiame visų transakcijų ID ir tą string'ą hashinam.
-    Tai atitinka v0.1 reikalavimą ("galima daryti paprastą visų TX ID maišą").
-    """
-    if not tx_ids:
-        return my_hash("")
-    return my_hash("".join(tx_ids))
-
-
-@dataclass
 class BlockHeader:
-    """
-    Bloko antraštė: tai kas yra kasama (Proof-of-Work).
-    """
-    prev_block_hash: str
-    timestamp: int
-    version: int
-    merkle_root_hash: str
-    nonce: int = 0
-    difficulty_target: str = "000"  # hash prefiksas, kurio ieškom
+    """Represents a block header containing metadata."""
+    
+    def __init__(
+        self,
+        version: int,
+        index: int,
+        prev_block_hash: str,
+        merkle_root: str,
+        timestamp: int,
+        difficulty_target: str,
+        nonce: int = 0,
+    ):
+        """
+        Initialize block header.
+        
+        Args:
+            version: Blockchain version
+            index: Block index in chain
+            prev_block_hash: Hash of previous block
+            merkle_root: Merkle root of transactions
+            timestamp: Block creation timestamp
+            difficulty_target: Mining difficulty (e.g., "000")
+            nonce: Proof-of-work nonce
+        """
+        self.version = version
+        self.index = index
+        self.prev_block_hash = prev_block_hash
+        self.merkle_root = merkle_root
+        self.timestamp = timestamp
+        self.difficulty_target = difficulty_target
+        self.nonce = nonce
+    
+    def to_string(self) -> str:
+        """
+        Convert header to string for hashing.
+        
+        Returns:
+            String representation of header
+        """
+        return (
+            str(self.version) +
+            str(self.index) +
+            self.prev_block_hash +
+            self.merkle_root +
+            str(self.timestamp) +
+            self.difficulty_target +
+            str(self.nonce)
+        )
+    
+    def __repr__(self) -> str:
+        return (
+            f"BlockHeader(index={self.index}, "
+            f"prev={self.prev_block_hash[:8]}..., "
+            f"merkle={self.merkle_root[:8]}..., "
+            f"nonce={self.nonce})"
+        )
 
-    def to_dict(self) -> dict:
-        return asdict(self)
 
-
-@dataclass
 class Block:
-    """
-    Pilnas blokas grandinėje:
-    - index: kelintas blokas grandinėje
-    - header: BlockHeader (kasimo dalis)
-    - transactions: transakcijų sąrašas
-    """
-    index: int
-    header: BlockHeader
-    transactions: List["Transaction"] = field(default_factory=list)
-
+    """Represents a block in the blockchain."""
+    
+    def __init__(self, header: BlockHeader, transactions: List[Transaction]):
+        """
+        Initialize a block.
+        
+        Args:
+            header: Block header
+            transactions: List of transactions in this block
+        """
+        self.header = header
+        self.transactions = transactions
+        self.index = header.index
+        
+        # Build Merkle Tree
+        self.merkle_tree = self._build_merkle_tree()
+    
+    def _build_merkle_tree(self) -> MerkleTree:
+        """
+        Build Merkle Tree from transactions.
+        
+        Returns:
+            MerkleTree object
+        """
+        tx_ids = [tx.tx_id for tx in self.transactions]
+        return MerkleTree(tx_ids)
+    
+    def get_merkle_root(self) -> str:
+        """
+        Get the Merkle root hash.
+        
+        Returns:
+            Merkle root hash
+        """
+        return self.merkle_tree.get_root()
+    
+    def get_hash(self) -> str:
+        """
+        Calculate and return the block hash.
+        
+        Returns:
+            Block hash
+        """
+        header_string = self.header.to_string()
+        return my_hash(header_string)
+    
+    def mine(self) -> str:
+        """
+        Mine the block by finding a valid nonce.
+        
+        Returns:
+            The valid block hash
+        """
+        target = self.header.difficulty_target
+        
+        while True:
+            block_hash = self.get_hash()
+            
+            if block_hash.startswith(target):
+                return block_hash
+            
+            self.header.nonce += 1
+    
     @staticmethod
     def build(
         index: int,
         prev_block_hash: str,
         version: int,
-        transactions: List["Transaction"],
-        difficulty_target: str = "000",
-        timestamp: int | None = None,
+        transactions: List[Transaction],
+        difficulty_target: str,
+        timestamp: Optional[int] = None,
     ) -> "Block":
-        tx_ids = [t.tx_id for t in transactions]  # tavo Transaction turi tx_id
-        mr = merkle_root_simple(tx_ids)
-        hdr = BlockHeader(
-            prev_block_hash=prev_block_hash,
-            timestamp=int(timestamp if timestamp is not None else time.time()),
+        """
+        Build a new block with proper Merkle root.
+        
+        Args:
+            index: Block index
+            prev_block_hash: Previous block hash
+            version: Blockchain version
+            transactions: List of transactions
+            difficulty_target: Mining difficulty
+            timestamp: Block timestamp (default: current time)
+            
+        Returns:
+            New Block instance
+        """
+        if timestamp is None:
+            timestamp = int(time.time())
+        
+        # Build temporary block to get Merkle root
+        temp_header = BlockHeader(
             version=version,
-            merkle_root_hash=mr,
-            nonce=0,
+            index=index,
+            prev_block_hash=prev_block_hash,
+            merkle_root="0" * 64,  # Temporary
+            timestamp=timestamp,
             difficulty_target=difficulty_target,
+            nonce=0,
         )
-        return Block(index=index, header=hdr, transactions=transactions)
-
-    def compute_hash(self) -> str:
-        """
-        Skaičiuojam hash tik nuo bloko HEADER.
-        Tai yra kasimo esmė: mes nekeičiam transakcijų, tik nonce.
-        """
-        header_json = _json_canonical(self.header.to_dict())
-        return my_hash(header_json)
-
-    def mine(self) -> str:
-        """
-        Proof-of-Work:
-        keliame nonce, kol hash prasideda difficulty_target (pvz. '000').
-        Grąžina rastą hash.
-        """
-        prefix = self.header.difficulty_target
-        while True:
-            h = self.compute_hash()
-            if h.startswith(prefix):
-                return h
-            self.header.nonce += 1
-
-    # --- helperiai, kad blockchain klasė galėtų su tavim kalbėt patogiai ---
-
-    def get_hash(self) -> str:
-        """
-        Sugrąžina current hash (pagal dabartinį nonce).
-        Naudinga kaip "bloko identitetas" grandinėje.
-        """
-        return self.compute_hash()
-
-    def short_info(self) -> str:
-        """
-        Gražus trumpas atvaizdavimas logams / printams.
-        """
+        temp_block = Block(temp_header, transactions)
+        
+        # Get real Merkle root
+        merkle_root = temp_block.get_merkle_root()
+        
+        # Create final header with real Merkle root
+        header = BlockHeader(
+            version=version,
+            index=index,
+            prev_block_hash=prev_block_hash,
+            merkle_root=merkle_root,
+            timestamp=timestamp,
+            difficulty_target=difficulty_target,
+            nonce=0,
+        )
+        
+        return Block(header, transactions)
+    
+    def __repr__(self) -> str:
         return (
-            f"Block(index={self.index}, hash={self.get_hash()[:12]}..., "
-            f"tx_count={len(self.transactions)}, nonce={self.header.nonce})"
+            f"Block(index={self.index}, "
+            f"hash={self.get_hash()[:16]}..., "
+            f"txs={len(self.transactions)})"
         )
