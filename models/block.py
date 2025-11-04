@@ -120,13 +120,23 @@ class Block:
         """
         target = self.header.difficulty_target
         
+        print(f"[MINING] Mining block #{self.index}...")
+        print(f"[MINING] Target: hash must start with '{target}'")
+        
+        attempts = 0
         while True:
             block_hash = self.get_hash()
             
             if block_hash.startswith(target):
+                print(f"[MINING] Success! Nonce: {self.header.nonce}, Attempts: {attempts}")
                 return block_hash
             
             self.header.nonce += 1
+            attempts += 1
+            
+            # Progress indicator
+            if attempts % 10000 == 0:
+                print(f"[MINING] Attempt {attempts}... Hash: {block_hash[:16]}...")
     
     @staticmethod
     def build(

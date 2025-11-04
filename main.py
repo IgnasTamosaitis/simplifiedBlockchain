@@ -8,22 +8,19 @@ def main():
     print("=" * 60)
     print()
     
-    # Initialize blockchain with difficulty
-    blockchain = Blockchain(difficulty_target="00")
+    # Initialize blockchain with EASY difficulty
+    blockchain = Blockchain(difficulty_target="0")
     
     # Generate users
-    blockchain.generate_users(n=1000)
+    blockchain.generate_users(n=100)
     
-    # Generate transactions (with validation)
-    blockchain.generate_transactions(m=10000)
+    # Generate transactions
+    blockchain.generate_transactions(m=500)
     
     # Mine all blocks competitively
-    blockchain.mine_until_done(block_tx_count=100)
+    blockchain.mine_until_done(block_tx_count=50)
     
     # Print summary
-    print("\n" + "=" * 60)
-    print("FINAL SUMMARY")
-    print("=" * 60)
     print(blockchain.summary())
 
 

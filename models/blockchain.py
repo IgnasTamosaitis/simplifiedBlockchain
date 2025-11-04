@@ -13,12 +13,12 @@ from models.mining_pool import MiningPool
 class Blockchain:
     """Main blockchain class managing the entire blockchain system."""
     
-    def __init__(self, difficulty_target: str = "000"):
+    def __init__(self, difficulty_target: str = "0"):
         """
         Initialize blockchain.
         
         Args:
-            difficulty_target: Mining difficulty (e.g., "000" means hash must start with 000)
+            difficulty_target: Mining difficulty (e.g., "0" means hash must start with 0)
         """
         self.users: Dict[str, User] = {}
         self.pending_transactions: List[Transaction] = []
@@ -35,6 +35,7 @@ class Blockchain:
     def _create_genesis_block(self) -> None:
         """Create the genesis (first) block."""
         print("[INIT] Kuriamas GENESIS blokas...")
+        print(f"[INIT] Difficulty target: '{self.difficulty_target}'")
 
         genesis_block = Block.build(
             index=0,
@@ -45,13 +46,13 @@ class Blockchain:
             timestamp=int(time.time()),
         )
         
-        _ = genesis_block.mine()
+        block_hash = genesis_block.mine()
 
         self.chain.append(genesis_block)
 
-        print("[OK] Genesis blokas paruoštas.")
-        print(f"     Hash: {genesis_block.get_hash()}")
-        print(f"     Merkle Root: {genesis_block.get_merkle_root()}")
+        print("[OK] Genesis blokas sukurtas!")
+        print(f"     Hash: {block_hash[:32]}...")
+        print(f"     Merkle Root: {genesis_block.get_merkle_root()[:32]}...")
         print(f"     Nonce: {genesis_block.header.nonce}\n")
 
     def generate_users(self, n: int = 1000):
@@ -143,9 +144,9 @@ class Blockchain:
             else:
                 invalid_count += 1
 
-        print(f"[OK] Valid transactions: {valid_count}")
-        print(f"[OK] Invalid (rejected): {invalid_count}")
-        print(f"[OK] Total in pool: {len(self.pending_transactions)}\n")
+        print(f"[OK] Validžios transakcijos: {valid_count}")
+        print(f"[OK] Atmestos transakcijos: {invalid_count}")
+        print(f"[OK] Transakcijų fonde: {len(self.pending_transactions)}\n")
 
     def pick_transactions_for_block(self, k: int = 100) -> List[Transaction]:
         """
@@ -177,6 +178,8 @@ class Blockchain:
         
         prev_block_hash = self.chain[-1].get_hash()
         
+        print(f"\n[POOL] Kuriami kandidatiniai blokai ({self.mining_pool.num_candidates} vnt)...")
+        
         # Create candidate blocks
         candidates = self.mining_pool.create_candidates(
             all_transactions=self.pending_transactions,
@@ -186,6 +189,8 @@ class Blockchain:
             difficulty_target=self.difficulty_target,
             tx_per_block=tx_count,
         )
+        
+        print(f"[MINING] Pradedamas konkurencinis kasimas...\n")
         
         # Mine competitively
         winner = self.mining_pool.mine_competitively(
@@ -235,28 +240,30 @@ class Blockchain:
         """
         while len(self.pending_transactions) > 0:
             print("=" * 60)
-            print(f"[INFO] Grandinės ilgis dabar: {len(self.chain)} blokai (-as)")
-            print(f"[INFO] Liko neapdorotų transakcijų: {len(self.pending_transactions)}\n")
+            print(f"[INFO] Grandinės ilgis: {len(self.chain)} blokų")
+            print(f"[INFO] Laukiančių transakcijų: {len(self.pending_transactions)}")
 
             new_block = self.mine_block_competitively(block_tx_count)
             
             if not new_block:
-                print("[ERROR] Mining failed, stopping...")
+                print("[ERROR] Kasimas nepavyko!")
                 break
 
             self.apply_block_state_changes(new_block)
             self.add_block_to_chain(new_block)
 
-            print(f"[CHAIN] Naujas blokas #{new_block.index} įtrauktas į grandinę.")
-            print(f"[CHAIN] Bloko hash: {new_block.get_hash()}")
-            print(f"[CHAIN] Merkle root: {new_block.get_merkle_root()}")
-            print(f"[CHAIN] Likusios transakcijos: {len(self.pending_transactions)}\n")
+            print(f"\n[SUCCESS] Blokas #{new_block.index} pridėtas į grandinę!")
+            print(f"          Hash: {new_block.get_hash()[:32]}...")
+            print(f"          Merkle root: {new_block.get_merkle_root()[:32]}...")
+            print(f"          Liko transakcijų: {len(self.pending_transactions)}\n")
 
-        print("=== Viskas baigta ===")
-        print(f"Galutinis blokų kiekis: {len(self.chain)}")
-        print(f"Vartotojų kiekis:       {len(self.users)}")
-        print(f"Paskutinio bloko hash:  {self.chain[-1].get_hash()[:32]}...")
-        print("======================\n")
+        print("\n" + "=" * 60)
+        print("KASIMAS BAIGTAS")
+        print("=" * 60)
+        print(f"Blokų grandinė: {len(self.chain)} blokai")
+        print(f"Vartotojai: {len(self.users)}")
+        print(f"Paskutinio bloko hash: {self.chain[-1].get_hash()[:32]}...")
+        print("=" * 60 + "\n")
 
     def summary(self) -> str:
         """

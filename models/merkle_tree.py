@@ -19,8 +19,8 @@ class MerkleTree:
         self.root: Optional[str] = None
         self.tree_levels: List[List[str]] = []
         
-        if transaction_ids:
-            self._build_tree()
+        
+        self._build_tree()
     
     def _build_tree(self) -> None:
         """Build the Merkle Tree from transaction IDs."""
@@ -31,8 +31,6 @@ class MerkleTree:
         # Level 0: Hash each transaction ID
         current_level = [my_hash(tx_id) for tx_id in self.transaction_ids]
         self.tree_levels.append(current_level.copy())
-        
-        print(f"[MERKLE] Building tree from {len(current_level)} transactions...")
         
         # Build upper levels
         level_num = 1
@@ -52,13 +50,11 @@ class MerkleTree:
                 next_level.append(parent_hash)
             
             self.tree_levels.append(next_level.copy())
-            print(f"[MERKLE] Level {level_num}: {len(next_level)} nodes")
             
             current_level = next_level
             level_num += 1
         
         self.root = current_level[0]
-        print(f"[MERKLE] Root hash: {self.root[:32]}...\n")
     
     def get_root(self) -> str:
         """
