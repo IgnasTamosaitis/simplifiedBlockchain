@@ -1,7 +1,3 @@
-"""
-Transaction model for blockchain transactions.
-"""
-
 import time
 import uuid
 from hash_utils import my_hash

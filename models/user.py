@@ -1,8 +1,3 @@
-"""
-User model for blockchain participants.
-"""
-
-
 class User:
     """Represents a user in the blockchain system."""
     

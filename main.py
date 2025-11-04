@@ -1,23 +1,31 @@
-import time
 from models.blockchain import Blockchain
 
+
 def main():
-    start = time.time()
+    """Run the blockchain simulation."""
+    print("=" * 60)
+    print("BLOCKCHAIN v0.2 - Simplified Implementation")
+    print("=" * 60)
+    print()
+    
+    # Initialize blockchain with difficulty
+    blockchain = Blockchain(difficulty_target="00")
+    
+    # Generate users
+    blockchain.generate_users(n=1000)
+    
+    # Generate transactions (with validation)
+    blockchain.generate_transactions(m=10000)
+    
+    # Mine all blocks competitively
+    blockchain.mine_until_done(block_tx_count=100)
+    
+    # Print summary
+    print("\n" + "=" * 60)
+    print("FINAL SUMMARY")
+    print("=" * 60)
+    print(blockchain.summary())
 
-    print("===== Blockchain v0.1 demo start =====\n")
-
-    bc = Blockchain(difficulty_target="000")
-    bc.generate_users(n=50)          # gali sumažinti, kad greičiau skaičiuotų
-    bc.generate_transactions(m=1000)  # irgi mažiau, kad spėtų persukti
-    bc.mine_until_done(block_tx_count=100)
-
-    print("===== SUMMARY =====")
-    print(bc.summary())
-
-    end = time.time()
-    print(f"Bendras vykdymo laikas: {end - start:.2f} s")
-
-    print("\n===== Blockchain =====")
 
 if __name__ == "__main__":
     main()

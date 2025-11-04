@@ -1,7 +1,3 @@
-"""
-Main Blockchain implementation.
-"""
-
 import random
 import time
 import uuid

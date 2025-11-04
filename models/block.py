@@ -1,7 +1,3 @@
-"""
-Block and BlockHeader models for blockchain.
-"""
-
 import time
 from typing import List, Optional
 from hash_utils import my_hash

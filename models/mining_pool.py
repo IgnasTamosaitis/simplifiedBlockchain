@@ -1,7 +1,3 @@
-"""
-Mining pool for competitive/decentralized mining simulation.
-"""
-
 import time
 import random
 from typing import List, Optional
