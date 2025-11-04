@@ -135,7 +135,7 @@ class Block:
             attempts += 1
             
             # Progress indicator
-            if attempts % 10000 == 0:
+            if attempts % 50000 == 0:
                 print(f"[MINING] Attempt {attempts}... Hash: {block_hash[:16]}...")
     
     @staticmethod

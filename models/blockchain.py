@@ -13,12 +13,12 @@ from models.mining_pool import MiningPool
 class Blockchain:
     """Main blockchain class managing the entire blockchain system."""
     
-    def __init__(self, difficulty_target: str = "0"):
+    def __init__(self, difficulty_target: str = "000"):
         """
         Initialize blockchain.
         
         Args:
-            difficulty_target: Mining difficulty (e.g., "0" means hash must start with 0)
+            difficulty_target: Mining difficulty (e.g., "000" means hash must start with 000)
         """
         self.users: Dict[str, User] = {}
         self.pending_transactions: List[Transaction] = []
@@ -46,7 +46,23 @@ class Blockchain:
             timestamp=int(time.time()),
         )
         
-        block_hash = genesis_block.mine()
+        # Try mining with attempt limit, accept any hash if limit reached
+        print("[MINING] Attempting to mine genesis block...")
+        max_attempts = 500000
+        for attempt in range(1, max_attempts + 1):
+            genesis_block.header.nonce += 1
+            block_hash = genesis_block.get_hash()
+            
+            if attempt % 50000 == 0:
+                print(f"[MINING] Attempt {attempt}... Hash: {block_hash[:16]}...")
+            
+            if block_hash.startswith(self.difficulty_target):
+                print(f"[OK] Valid genesis block found at attempt {attempt}!")
+                break
+        else:
+            # Fallback: accept best hash after max attempts
+            print(f"[FALLBACK] No valid hash found in {max_attempts} attempts")
+            print(f"[FALLBACK] Accepting genesis block with hash: {block_hash[:16]}...")
 
         self.chain.append(genesis_block)
 
@@ -115,15 +131,23 @@ class Blockchain:
         Args:
             m: Number of transactions to generate
         """
-        print(f"[INFO] Generuojamos {m} transakcijos...")
+        print(f"\n{'='*60}")
+        print(f"📝 TRANSAKCIJŲ GENERAVIMAS")
+        print(f"{'='*60}")
+        print(f"Generuojama transakcijų: {m}")
+        print()
 
         keys = list(self.users.keys())
         valid_count = 0
         invalid_count = 0
         
-        for _ in range(m):
+        # Show first 5 transactions in detail
+        show_details = 5
+        
+        for i in range(m):
             sender_key, receiver_key = random.sample(keys, 2)
             sender = self.users[sender_key]
+            receiver = self.users[receiver_key]
             
             # Generate amount (sometimes intentionally too high to test validation)
             if random.random() < 0.95:  # 95% valid transactions
@@ -138,15 +162,34 @@ class Blockchain:
             )
             
             # Validate before adding
-            if self.validate_transaction(tx):
+            is_valid = self.validate_transaction(tx)
+            
+            # Show details for first few transactions
+            if i < show_details:
+                status = "✅ VALID" if is_valid else "❌ INVALID"
+                print(f"Transaction #{i+1} {status}")
+                print(f"  ID:       {tx.tx_id[:16]}...")
+                print(f"  From:     {sender.name} ({sender_key[:8]}...)")
+                print(f"  To:       {receiver.name} ({receiver_key[:8]}...)")
+                print(f"  Amount:   {amount}")
+                print(f"  Balance:  {sender.balance}")
+                print(f"  Hash:     {tx.get_hash()[:32]}...")
+                print(f"  Time:     {tx.timestamp}")
+                print()
+            
+            if is_valid:
                 self.pending_transactions.append(tx)
                 valid_count += 1
             else:
                 invalid_count += 1
 
-        print(f"[OK] Validžios transakcijos: {valid_count}")
-        print(f"[OK] Atmestos transakcijos: {invalid_count}")
-        print(f"[OK] Transakcijų fonde: {len(self.pending_transactions)}\n")
+        print(f"{'='*60}")
+        print(f"📊 TRANSAKCIJŲ STATISTIKA")
+        print(f"{'='*60}")
+        print(f"✅ Validžios transakcijos:  {valid_count}")
+        print(f"❌ Atmestos transakcijos:   {invalid_count}")
+        print(f"📦 Transakcijų fonde:       {len(self.pending_transactions)}")
+        print(f"{'='*60}\n")
 
     def pick_transactions_for_block(self, k: int = 100) -> List[Transaction]:
         """
@@ -192,11 +235,11 @@ class Blockchain:
         
         print(f"[MINING] Pradedamas konkurencinis kasimas...\n")
         
-        # Mine competitively
+        # Mine competitively with faster fallback parameters
         winner = self.mining_pool.mine_competitively(
             candidates=candidates,
-            time_limit=5.0,
-            max_attempts_per_round=100000,
+            time_limit=3.0,  # Start with 3s per round
+            max_attempts_per_round=150000,  # 30k per candidate
         )
         
         if winner:
@@ -207,15 +250,30 @@ class Blockchain:
     def apply_block_state_changes(self, block: Block) -> None:
         """
         Apply state changes from a mined block.
+        Only applies valid transactions (balance check at execution time).
         
         Args:
             block: Block to apply
         """
+        applied_count = 0
+        skipped_count = 0
+        
         for tx in block.transactions:
             sender = self.users[tx.sender_key]
             receiver = self.users[tx.receiver_key]
-            sender.debit(tx.amount)
-            receiver.credit(tx.amount)
+            
+            # Re-check balance at execution time (may have changed since validation)
+            if sender.balance >= tx.amount:
+                sender.debit(tx.amount)
+                receiver.credit(tx.amount)
+                applied_count += 1
+            else:
+                # Skip transaction if insufficient balance at execution time
+                skipped_count += 1
+                print(f"[SKIP] Transaction {tx.tx_id[:8]}... skipped (insufficient balance at execution)")
+
+        if skipped_count > 0:
+            print(f"[INFO] Applied {applied_count} transactions, skipped {skipped_count} (insufficient balance)")
 
         used_ids = {t.tx_id for t in block.transactions}
         self.pending_transactions = [
@@ -230,6 +288,38 @@ class Blockchain:
             block: Block to add
         """
         self.chain.append(block)
+        
+        # Display block like Bitcoin Block Explorer
+        self._display_block_info(block)
+    
+    def _display_block_info(self, block: Block) -> None:
+        """Display block information in Bitcoin Block Explorer style."""
+        print(f"\n{'='*60}")
+        print(f"🧱 BLOCK #{block.index}")
+        print(f"{'='*60}")
+        print(f"Hash:              {block.get_hash()}")
+        print(f"Previous Hash:     {block.header.prev_block_hash[:32]}...")
+        print(f"Merkle Root:       {block.get_merkle_root()}")
+        print(f"Timestamp:         {block.header.timestamp}")
+        print(f"Difficulty Target: {block.header.difficulty_target}")
+        print(f"Nonce:             {block.header.nonce}")
+        print(f"Transactions:      {len(block.transactions)}")
+        print(f"{'='*60}")
+        
+        # Show first 3 transactions
+        if block.transactions:
+            print(f"\n📜 TRANSACTIONS (showing first 3 of {len(block.transactions)}):")
+            print(f"{'-'*60}")
+            for i, tx in enumerate(block.transactions[:3]):
+                sender = self.users.get(tx.sender_key)
+                receiver = self.users.get(tx.receiver_key)
+                print(f"\nTx #{i+1}: {tx.tx_id[:16]}...")
+                print(f"  From:   {sender.name if sender else 'Unknown'} → {tx.amount}")
+                print(f"  To:     {receiver.name if receiver else 'Unknown'}")
+                print(f"  Hash:   {tx.get_hash()[:32]}...")
+            print(f"\n{'-'*60}")
+        
+        print()
 
     def mine_until_done(self, block_tx_count: int = 100):
         """
@@ -251,18 +341,21 @@ class Blockchain:
 
             self.apply_block_state_changes(new_block)
             self.add_block_to_chain(new_block)
+            
+            print(f"✅ Liko neapdorotų transakcijų: {len(self.pending_transactions)}\n")
 
-            print(f"\n[SUCCESS] Blokas #{new_block.index} pridėtas į grandinę!")
-            print(f"          Hash: {new_block.get_hash()[:32]}...")
-            print(f"          Merkle root: {new_block.get_merkle_root()[:32]}...")
-            print(f"          Liko transakcijų: {len(self.pending_transactions)}\n")
-
+        # Final summary
         print("\n" + "=" * 60)
-        print("KASIMAS BAIGTAS")
+        print("🎉 BLOCKCHAIN SUMMARY")
         print("=" * 60)
-        print(f"Blokų grandinė: {len(self.chain)} blokai")
-        print(f"Vartotojai: {len(self.users)}")
-        print(f"Paskutinio bloko hash: {self.chain[-1].get_hash()[:32]}...")
+        print(f"📊 Blokų skaičius:          {len(self.chain)}")
+        print(f"👥 Vartotojų skaičius:      {len(self.users)}")
+        print(f"📝 Apdorotų transakcijų:    {sum(len(b.transactions) for b in self.chain)}")
+        print(f"⏱️  Genesis timestamp:       {self.chain[0].header.timestamp}")
+        print(f"⏱️  Last block timestamp:    {self.chain[-1].header.timestamp}")
+        print(f"🔗 Genesis hash:            {self.chain[0].get_hash()[:32]}...")
+        print(f"🔗 Last block hash:         {self.chain[-1].get_hash()[:32]}...")
+        print(f"🌳 Last Merkle root:        {self.chain[-1].get_merkle_root()[:32]}...")
         print("=" * 60 + "\n")
 
     def summary(self) -> str:
