@@ -58,7 +58,7 @@ simplified_blockchain/
 └── README.md                 # Projekto aprašymas ir instrukcijos
 ```
 
-### Paleidimas
+### Paleidimas ir naudojimasis
 
 Reikalavimai:
 - **Python 3.8+**
@@ -68,15 +68,90 @@ Paleidimas:
 ```bash
 python main.py
 ```
+Paleidus programą terminale matysite:
+- kuriamas „Genesis“ blokas
+- sugeneruojami vartotojai
+- sukuriamos transakcijos
+- vyksta konkurencinis kasimas
+- blokai pridedami prie grandinės
+- galiausiai rodoma suvestinė
+
+```less
+[INIT] Kuriamas GENESIS blokas...
+[INFO] Sugeneruota 1000 vartotojų.
+[INFO] Generuojama 10000 transakcijų...
+[MINING] Pradedamas konkurencinis kasimas...
+✅ BLOCK #1 iškastas
+✅ BLOCK #2 iškastas
+...
+🎉 BLOCKCHAIN SUMMARY
+
+```
+Blokų informacija spausdinama kas kartą, kai blokas iškasamas:
+-  blokų hash
+- previous hash
+-  Merkle root
+-  nonce
+-  pirmos 3 transakcijos bloke
+
 ---
 
+## Programos veikimas
+
+## ✅ Kaip veikia programa (trumpas paaiškinimas)
+
+Programa imituoja supaprastintą Bitcoin tipo blokų grandinę. Viskas vyksta tokia tvarka:
+
+1. **Sukuriama blockchain sistema**
+   Sukuriamas pirmasis – „Genesis“ blokas, nustatomas Proof-of-Work sunkumas.
+
+2. **Sugeneruojami vartotojai**
+   Sistema sukuria atsitiktinius vartotojus su unikaliu raktu ir balansu.
+
+3. **Sugeneruojamos transakcijos**
+   Atsitiktiniai vartotojai siunčia pinigus vieni kitiems.  
+   Kiekviena transakcija turi ID, siuntėją, gavėją, sumą, laiką ir hash.
+
+4. **Transakcijos tikrinamos**
+   Prieš dedant į bloką tikrinama:
+   * ar vartotojai egzistuoja  
+   * ar siuntėjas turi pakankamai lėšų  
+   * ar transakcijos hash yra teisingas
+
+5. **Formuojami blokai**
+   Surinkus tam tikrą kiekį transakcijų, sukuriamas naujas blokas su:
+   - ankstesnio bloko hash
+   - savo hash
+   - Merkle Root (transakcijų suvestinis hash)
+   - nonce (kasimo skaitiklis)
+
+6. **Proof-of-Work kasimas**
+   Blokas laikomas galiojančiu tik jei jo hash prasideda nustatytu kiekiu nulių (pvz. `000`).  
+   Programa didina nonce, kol randa tinkamą hash.
+
+7. **Konkurencinis kasimas (v0.2)**
+   Vienu metu kasa keli „kasėjai“ – sukuriami keli blokų kandidatai.  
+   Laimi tas, kurio blokas pirmas randa tinkamą hash.
+
+8. **Blokas pridedamas į grandinę**
+   Transakcijos pritaikomos vartotojų balansams
+   Naudotos transakcijos pašalinamos
+   Blokas pridedamas prie blockchain
+
+9. **Procesas kartojamas**
+   Sistema kasa blokus tol, kol nebelieka transakcijų.  
+   Galiausiai parodoma santrauka – kiek blokų, transakcijų, koks paskutinio bloko hash ir Merkle root.
+
+Trumpai: programa kuria vartotojus → generuoja transakcijas → tikrina jas → sudeda į blokus → kasa juos su Proof-of-Work → prideda į blokų grandinę, kol visos transakcijos apdorotos.
+
+---
 ## Veikimo esmė: v0.1 → v0.2
 
 Ši sistema imituoja supaprastintą blockchain veikimą: sukuriami vartotojai, formuojamos transakcijos, jos tikrinamos, blokuojamos į blokus, skaičiuojamas Merkle Root ir vykdomas Proof-of-Work kasimas. Pabaigoje gaunama nuosekli blokų grandinė, kurioje kiekvienas blokas priklausomas nuo ankstesnio.
 
 ---
 
-### v0.1 – bazinis veikimas (vienas kasėjas, PoW)
+### v0.1 – (vienas kasėjas, PoW)
 
 **Procesas:**
 1. Sugeneruojami vartotojai.
@@ -127,7 +202,7 @@ Transactions:      50
 
 ```
 ---
-### v0.2 – patobulinta versija (Merkle Tree + tikrinimas + konkurencinis kasimas)
+### v0.2 – (Merkle Tree + tikrinimas + konkurencinis kasimas)
 
 * Tikras Merkle Tree, o ne tik sujungtas hash
 * Transakcijų validacija (balansas, hash, siuntėjo/gavėjo egzistavimas)
@@ -142,13 +217,16 @@ from models.blockchain import Blockchain
 
 blockchain = Blockchain(difficulty_target="000")
 
-# Sugeneruojami duomenys
+# 1. Sugeneruojami vartotojai
 blockchain.generate_users(n=1000)
+
+# 2. Sugeneruojamos transakcijos tarp jų
 blockchain.generate_transactions(m=10000)
 
-# Konkurencinis kasimas: 5 kandidatai, 100 txn per bloką
+# 3. Pradedamas konkurencinis kasimas (5 kandidatai, 100 transakcijų per bloką)
 blockchain.mine_until_done(block_tx_count=100)
 
+# 4. Suvestinė
 print(blockchain.summary())
 
 ```
@@ -173,13 +251,15 @@ winner = mining_pool.mine_competitively(
 
 ```
 
-- Sukuriami 5 skirtingi blokai su skirtingomis transakcijomis
-- Visi vienu metu bando rasti hash, prasidedantį 000
-- Jei nepavyksta — didinami limitai
-- Jei vis tiek nepavyksta — priimamas mažiausias hash (fallback), kad grandinė nestovėtų
+- Sukuriami 5 skirtingi blokų kandidatai. Visi turi skirtingus transakcijų rinkinius ir skirtingus timestamp.
+- Kiekvienas kandidatas bando rasti hash, kuris prasideda „000“
+- Kas pirmas suranda – tas laimi
+- Jei nei vienas per nustatytą laiką neranda, sistema:
+* padidina laiko ir bandymų limitus
+* jei ir tada nepavyksta, priima „geriausią“ (mažiausią hash) bloką
 
 
-Realus v0.2 rezultatas: 
+v0.2 rezultatas: 
 
 ```yaml
 
@@ -228,7 +308,6 @@ Tx #3: 1bdca732-541d-43...
 🌳 Last Merkle root:        28f15fcd26275f85316896510da0ad45...
 ============================================================
 
-
 ```
 ---
 
@@ -241,7 +320,6 @@ Programos veikimą galima nesunkiai keisti tiesiog redaguojant kelias eilutes `m
 ```python
 # Mažiau nulių → greitesnis kasimas
 blockchain = Blockchain(difficulty_target="00")
-
 
 # Daugiau nulių → žymiai sunkiau kasti (ilgiau)
 blockchain = Blockchain(difficulty_target="0000")
@@ -283,74 +361,96 @@ winner = self.mining_pool.mine_competitively(
 - Didesni skaičiai → greičiau ras tinkamą bloką, bet ilgiau užtruks skaičiavimai.
 - Mažesni skaičiai → greičiau pereis prie fallback (mažiausio hash) varianto.
 
+---
 
+## Objektinio programavimo praktikos
 
+Projektas parašytas pagal OOP principus: kiekviena klasė atlieka aiškiai apibrėžtą funkciją (`User`, `Transaction`, `Block`, `Blockchain`, `MiningPool`). Duomenys enkapsuliuoti, balansas keičiama tik per metodus, blokas sukuriamas per `Block.build()` (Merkle root apskaičiuojamas prieš header), o konkurencinis kasimas imituoja kelis kasėjus.
 
+**Pavyzdys:**
 
+```python
+# Vartotojo operacijos
+user = User(name="User_1", public_key="abc123", balance=1000)
+user.debit(200)
+user.credit(50)
+print(user.balance)   # 850
 
+# Transakcija
+tx = Transaction(sender_key="abc123", receiver_key="def456", amount=200)
+print(tx.get_hash())    # 64 simbolių hash
+print(tx.verify_hash()) # True
 
+# Bloko kūrimas (Merkle root apskaičiuojamas viduje)
+block = Block.build(
+    index=1,
+    prev_block_hash="0000000000000000...",
+    version=1,
+    transactions=[tx],
+    difficulty_target="000"
+)
+print(block.get_merkle_root())
+print(block.get_hash())
 
-
-
-
+```
 
 
 ## AI pagalbos panaudojimas
 
-### Kur buvo naudojama AI pagalba (GitHub Copilot / ChatGPT)
+Projekte buvo naudojama AI (ChatGPT / Copilot) pagalba, tačiau tik kaip papildomas įrankis, o ne pagrindinis kūrimo šaltinis.
 
-#### 1. **Kodo struktūros projektavimas**
-- Klasių hierarchijos pasiūlymai
-- OOP geriausių praktikų rekomendacijos
-- Modulių organizavimas
+### Kur AI padėjo
+- Padėjo apsispręsti **nuo ko pradėti** ir kaip logiškai suskirstyti projektą į klases (`User`, `Transaction`, `Block`, `Blockchain`, `MerkleTree`, `MiningPool`)
+- Pasiūlė OOP gerąsias praktikas ir projekto katalogų struktūrą
+- Padėjo suprasti Proof-of-Work, Merkle Tree ir konkurencinio kasimo principus
+- Padėjo README tvarkingai parašyti
+- Debugging situacijose:
+  - import problemos
+  - Merkle Tree kraštiniai atvejai (nelyginis transakcijų skaičius)
+  - kasimo limitų reguliavimas
+- Pasiūlė idėjų optimizacijoms (hash funkcijos efektyvumas, mažiau nereikalingų skaičiavimų)
+- Padėjo patobulinti mūsų pačių parašytą hash funkciją remiantis DJB2 logika
 
-#### 2. **Algoritmų implementacija**
-- **Merkle Tree** binarinio medžio logika
-- **Konkurencinis kasimas** round-robin algoritmas
-- **Transakcijų validacija** srautų projektavimas
+### Kas **nebuvo** generuota AI
+- Blockchain struktūra ir veikimo logika
+- Proof-of-Work realizacija ir konkurencinės kasybos algoritmas
+- Transakcijų ir balansų tikrinimas
+- Merkle Tree realizacija ir duomenų apdorojimas
+- Testavimas ir rezultatų analizė
+- Galutinių sprendimų priėmimas bei parametrų parinkimas
 
-#### 3. **Kodo dokumentacija**
-- Docstring generavimas visoms funkcijoms
-- README.md struktūros ir turinio kūrimas
-- Komentarų rašymas
 
-#### 4. **Debugging pagalba**
-- Import klaidų sprendimas (sys.path pataisymai)
-- Logikos klaidų identifikavimas
-- Merkle Tree tuščių transakcijų apdorojimas
-- Kasimo proceso optimizavimas
+## Papildomos užduotys
 
-#### 5. **Konsolės išvedimo formatavimas**
-- Vizualių progreso indikatorių kūrimas
-- Struktūrizuotų žurnalų pranešimų dizainas
-- Santraukų statistikos formatavimas
+**Lygiagretus blokų kasimo proceso realizavimas v0.2 versijoje (+0.5 balo)**:
 
-#### 6. **Optimizavimas**
-- Maišos funkcijos greičio pagerinimas (DJB2 algoritmas)
-- Kasimo parametrų derinimas
-- Didelių duomenų rinkinių apdorojimo optimizavimas
+v0.2 versijoje kasimas nebėra atliekamas tik vieno kasėjo. Vietoje to sistema sukuria **kelis kandidatus (5 blokai)**, ir visi jie bando rasti tinkamą hash tuo pačiu metu. Laimi tas, kurio blokas pirmas turi hash, prasidedantį `000`.
 
-### Kas NEBUVO generuota AI
+**Kur tai padaryta:**
+- Failas: `models/mining_pool.py`
+- Funkcijos: `create_candidates()` ir `mine_competitively()`
+- Iškvietimas vyksta per `Blockchain.mine_block_competitively()`
 
-- Pagrindinis blockchain konceptas ir reikalavimai
-- Pasirinktinės maišos funkcijos algoritmo idėja
-- Bendrų projekto architektūros sprendimai
-- Testavimas ir verifikacija
-- Galutinių parametrų derinimas
-- Versijų valdymo sprendimai
+**Veikimas:**
 
-### AI įrankių apibūdinimas
+```python
+# blockchain.py
+winner = self.mining_pool.mine_competitively(
+    candidates=candidates,
+    time_limit=3.0,
+    max_attempts_per_round=150000,
+)
+```
+*  `create_candidates()` paima transakcijas, jas išmaišo ir sukuria 5 skirtingus "kasėjus" (kandidatus). Kiekvienas kandidatas turi savo bloką su skirtinga transakcijų kombinacija ir visi jie bando iškasti tą patį sekantį bloką.
+Penki kasėjai, nes: 
+```python
+self.mining_pool = MiningPool(num_candidates=5)
+```
+*  `mine_competitively()` visi 5 blokai „varžosi“, kuris ras tinkamą hash.
+*  Jeigu niekas nespėja per nustatytą laiką – didinami limitai.
+*  Jeigu vis tiek nepavyksta – priimamas geriausias blokas pagal mažiausią hash, kad grandinė nesustotų.
 
-**AI buvo naudojama kaip:**
-- Kodo rašymo pagalbininkas
-- Dokumentacijos generatorius
-- Debugging partneris
-- Algoritminių sprendimų patarėjas
-
-**AI NEBUVO naudojama kaip:**
-- Pagrindinis projekto kūrėjas
-- Automatinis kodo generatorius "iš nieko"
-- Sprendimų priėmimo sistema
-
----
-
+Ką tai duoda:
+- Kasimas tampa „decentralizuotas“ – kaip keli kasėjai vienu metu.
+- Greitesnė tikimybė surasti hash.
+- Grandinė niekada neįstringa, nes yra atsarginis sprendimas (fallback).
