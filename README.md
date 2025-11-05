@@ -1,4 +1,77 @@
-# Supaprastinta blokų grandinės simuliacija
+
+# Supaprastintos blokų grandinės (blockchain) kūrimas
+
+Šios užduoties tikslas – sukurti supaprastintą blokų grandinę (angl. blockchain), kurios duomenų sluoksnio struktūra pavaizduota žemiau:
+![image](https://raw.githubusercontent.com/IgnasTamosaitis/simplifiedBlockchain/refs/heads/main/images/struktura.png)
+
+Sistema imituoja supaprastintą blokų grandinės veikimą – generuoja vartotojus, kuria transakcijas, formuoja blokus, skaičiuoja Merkle medį, atlieka *Proof-of-Work*  ir užtikrina vientisumą pasitelkiant *hash*.
+
+### Pagrindinės Funkcijos
+
+1. Blokų Generavimas: Blokai generuojami, kai surenkama pakankamai transakcijų. Kiekvienas blokas turi ankstesnio bloko hash, dabartinį hash ir Merkle Root Hash.
+2. Transakcijų Tikrinimas: Prieš įtraukiant transakciją į bloką, tikrinama, ar siuntėjo balansui pakanka lėšų ir ar transakcijos maišos kodas sutampa su nurodytu.
+3. Proof-of-Work (PoW): Siekiant užtikrinti blokų vientisumą ir apsaugoti nuo manipuliacijos, kiekvieno bloko generavimas vykdomas per *Proof-of-Work* algoritmą.
+4. Merkle Root Hash: Naudojama supaprastinta Merkle medžio versija – vietoj dvejetainio Merkle medžio suformuojama maišos reikšmė, kuri susiejama su visų bloko transakcijų ID.
+5. Centralizuotas Blokų Valdymas: Vartotojai ir transakcijos yra generuojami ir valdomi per centralizuotą mazgą, kuris saugo ir apdoroja visą informaciją.
+
+
+### Projekto struktūra
+
+```
+simplified_blockchain/
+│
+├── models/
+│   ├── __init__.py           # Paketo inicializacija
+│   ├── blockchain.py         # Pagrindinė blockchain logika
+│   ├── block.py              # Block ir BlockHeader klasės
+│   ├── transaction.py        # Transaction klasė su verifikacija
+│   ├── user.py               # User klasė balansų valdymui
+│   ├── merkle_tree.py        # Merkle Tree implementacija (v0.2)
+│   └── mining_pool.py        # Lygiagretaus kasimo imitacija (v0.2)
+│
+├── hash_utils.py             # Pasirinktinė maišos funkcija
+├── main.py                   # Programos paleidimo failas
+└── README.md                 # Projekto aprašymas ir instrukcijos
+```
+
+### Paleidimas
+
+Reikalavimai:
+- **Python 3.8+**
+- Papildomų bibliotekų nereikia (naudojama tik standartinė biblioteka)
+
+Paleidimas:
+```bash
+python main.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Versijos
 
@@ -77,33 +150,6 @@ simplified_blockchain/
 └── README.md                 # Šis failas
 ```
 
-## Funkcionalumas
-
-### Merkle Tree (v0.2)
-- Binarinė medžio struktūra efektyviam transakcijų tikrinimui
-- Automatinis root hash skaičiavimas
-- Nelyginių transakcijų skaičiaus palaikymas (dubliuoja paskutinį hash)
-
-### Transakcijų verifikacija (v0.2)
-- **Maišos tikrinimas:** Užtikrina, kad transakcijos duomenys nebuvo pakeisti
-- **Balanso tikrinimas:** Neleidžia išleisti daugiau nei turima
-- **Vartotojų validacija:** Patikrina, ar siuntėjas ir gavėjas egzistuoja
-
-### Konkurencinis kasimas (v0.2)
-- 5 kandidatiniai blokai konkuruoja vienu metu
-- Kiekvienas kandidatas turi skirtingas transakcijas
-- Laiko limitas su automatišku padidinimu
-- Simuliuoja decentralizuotą kasimo procesą
-
-### Konsolės išvedimas
-Sistema pateikia detalią informaciją:
-- Genesis bloko kūrimas
-- Vartotojų generavimas
-- Transakcijų validacijos statistika
-- Merkle medžio statymo procesas
-- Konkurencinio kasimo eiga
-- Blokų pridėjimo rezultatai
-- Galutinė grandinės santrauka
 
 ## Naudojimas
 
@@ -383,28 +429,3 @@ class Block:
 
 ---
 
-## Būsimi patobulinimai (v0.3+)
-
-- [ ] Peer-to-peer tinklo simuliacija
-- [ ] Skaitmeniniai parašai (public/private key kriptografija)
-- [ ] UTXO modelis
-- [ ] Smart contracts
-- [ ] Konsensuso mechanizmai (PoS, PBFT)
-- [ ] Blockchain vizualizacija
-- [ ] Našumo metrikos ir analizė
-
-## Licencija
-
-MIT License
-
-## Autorius
-
-Ignas Tamošaitis
-- GitHub: [@IgnasTamosaitis](https://github.com/IgnasTamosaitis)
-- Repository: [simplifiedBlockchain](https://github.com/IgnasTamosaitis/simplifiedBlockchain)
-
-## Padėka
-
-- Bitcoin whitepaper už blockchain koncepcijas
-- Ethereum už smart contract įkvėpimą
-- AI įrankiai (GitHub Copilot / ChatGPT) už kodo rašymo pagalbą
