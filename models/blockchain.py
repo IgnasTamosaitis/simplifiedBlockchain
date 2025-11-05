@@ -74,9 +74,6 @@ class Blockchain:
     def generate_users(self, n: int = 1000):
         """
         Generate random users.
-        
-        Args:
-            n: Number of users to generate
         """
         print(f"[INFO] Generuojami {n} vartotojai...")
 
@@ -96,12 +93,6 @@ class Blockchain:
     def validate_transaction(self, tx: Transaction) -> bool:
         """
         Validate a transaction before adding to pending pool.
-        
-        Args:
-            tx: Transaction to validate
-            
-        Returns:
-            True if valid, False otherwise
         """
         # Check hash integrity
         if not tx.verify_hash():
@@ -127,9 +118,6 @@ class Blockchain:
     def generate_transactions(self, m: int = 10000):
         """
         Generate random transactions with validation.
-        
-        Args:
-            m: Number of transactions to generate
         """
         print(f"\n{'='*60}")
         print(f"📝 TRANSAKCIJŲ GENERAVIMAS")
@@ -166,7 +154,7 @@ class Blockchain:
             
             # Show details for first few transactions
             if i < show_details:
-                status = "✅ VALID" if is_valid else "❌ INVALID"
+                status = "VALID" if is_valid else "INVALID"
                 print(f"Transaction #{i+1} {status}")
                 print(f"  ID:       {tx.tx_id[:16]}...")
                 print(f"  From:     {sender.name} ({sender_key[:8]}...)")
@@ -206,12 +194,6 @@ class Blockchain:
     def mine_block_competitively(self, tx_count: int = 100) -> Optional[Block]:
         """
         Mine a block using competitive mining with multiple candidates.
-        
-        Args:
-            tx_count: Number of transactions per candidate block
-            
-        Returns:
-            Mined block or None if mining failed
         """
         if len(self.pending_transactions) < tx_count:
             tx_count = len(self.pending_transactions)
@@ -251,9 +233,6 @@ class Blockchain:
         """
         Apply state changes from a mined block.
         Only applies valid transactions (balance check at execution time).
-        
-        Args:
-            block: Block to apply
         """
         applied_count = 0
         skipped_count = 0
@@ -283,9 +262,6 @@ class Blockchain:
     def add_block_to_chain(self, block: Block) -> None:
         """
         Add a mined block to the chain.
-        
-        Args:
-            block: Block to add
         """
         self.chain.append(block)
         
@@ -295,7 +271,7 @@ class Blockchain:
     def _display_block_info(self, block: Block) -> None:
         """Display block information in Bitcoin Block Explorer style."""
         print(f"\n{'='*60}")
-        print(f"🧱 BLOCK #{block.index}")
+        print(f"BLOCK #{block.index}")
         print(f"{'='*60}")
         print(f"Hash:              {block.get_hash()}")
         print(f"Previous Hash:     {block.header.prev_block_hash[:32]}...")
@@ -308,7 +284,7 @@ class Blockchain:
         
         # Show first 3 transactions
         if block.transactions:
-            print(f"\n📜 TRANSACTIONS (showing first 3 of {len(block.transactions)}):")
+            print(f"\nTRANSACTIONS (showing first 3 of {len(block.transactions)}):")
             print(f"{'-'*60}")
             for i, tx in enumerate(block.transactions[:3]):
                 sender = self.users.get(tx.sender_key)
@@ -324,9 +300,6 @@ class Blockchain:
     def mine_until_done(self, block_tx_count: int = 100):
         """
         Mine all pending transactions using competitive mining.
-        
-        Args:
-            block_tx_count: Number of transactions per block
         """
         while len(self.pending_transactions) > 0:
             print("=" * 60)
@@ -360,10 +333,7 @@ class Blockchain:
 
     def summary(self) -> str:
         """
-        Get blockchain summary.
-        
-        Returns:
-            Summary string
+        Blockchain summary.
         """
         return (
             f"Grandinės ilgis: {len(self.chain)} blokai\n"

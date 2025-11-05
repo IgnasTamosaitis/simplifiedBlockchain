@@ -41,9 +41,6 @@ class BlockHeader:
     def to_string(self) -> str:
         """
         Convert header to string for hashing.
-        
-        Returns:
-            String representation of header
         """
         return (
             str(self.version) +
@@ -85,9 +82,6 @@ class Block:
     def _build_merkle_tree(self) -> MerkleTree:
         """
         Build Merkle Tree from transactions.
-        
-        Returns:
-            MerkleTree object
         """
         tx_ids = [tx.tx_id for tx in self.transactions]
         return MerkleTree(tx_ids)
@@ -95,18 +89,12 @@ class Block:
     def get_merkle_root(self) -> str:
         """
         Get the Merkle root hash.
-        
-        Returns:
-            Merkle root hash
         """
         return self.merkle_tree.get_root()
     
     def get_hash(self) -> str:
         """
         Calculate and return the block hash.
-        
-        Returns:
-            Block hash
         """
         header_string = self.header.to_string()
         return my_hash(header_string)
@@ -114,9 +102,6 @@ class Block:
     def mine(self) -> str:
         """
         Mine the block by finding a valid nonce.
-        
-        Returns:
-            The valid block hash
         """
         target = self.header.difficulty_target
         

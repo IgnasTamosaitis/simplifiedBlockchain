@@ -8,9 +8,6 @@ class Transaction:
     
     def __init__(self, sender_key: str, receiver_key: str, amount: int):
         """
-        Initialize a new transaction.
-        
-        Args:
             sender_key: Public key of sender
             receiver_key: Public key of receiver
             amount: Amount to transfer
@@ -27,9 +24,7 @@ class Transaction:
     def _calculate_hash(self) -> str:
         """
         Calculate the transaction hash.
-        
-        Returns:
-            64-character hex hash string
+        Returns: 64-character hex hash string
         """
         data = (
             self.tx_id +
@@ -43,18 +38,12 @@ class Transaction:
     def get_hash(self) -> str:
         """
         Get the transaction hash.
-        
-        Returns:
-            Transaction hash
         """
         return self._hash
     
     def verify_hash(self) -> bool:
         """
         Verify that the transaction hash is correct.
-        
-        Returns:
-            True if hash is valid, False otherwise
         """
         recalculated = self._calculate_hash()
         is_valid = recalculated == self._hash
@@ -69,12 +58,6 @@ class Transaction:
     def verify_balance(self, sender_balance: int) -> bool:
         """
         Verify sender has sufficient balance.
-        
-        Args:
-            sender_balance: Current balance of sender
-            
-        Returns:
-            True if sender has enough balance, False otherwise
         """
         is_valid = sender_balance >= self.amount
         

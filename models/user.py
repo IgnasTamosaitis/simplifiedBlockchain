@@ -4,7 +4,6 @@ class User:
     def __init__(self, name: str, public_key: str, balance: int = 0):
         """
         Initialize a new user.
-        
         Args:
             name: User's display name
             public_key: Unique public key identifier
@@ -17,9 +16,6 @@ class User:
     def credit(self, amount: int) -> None:
         """
         Add funds to user's balance.
-        
-        Args:
-            amount: Amount to add
         """
         if amount < 0:
             raise ValueError("Cannot credit negative amount")
@@ -28,9 +24,6 @@ class User:
     def debit(self, amount: int) -> None:
         """
         Subtract funds from user's balance.
-        
-        Args:
-            amount: Amount to subtract
         """
         if amount < 0:
             raise ValueError("Cannot debit negative amount")

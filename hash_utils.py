@@ -13,14 +13,9 @@ def _rotate_left(x, r):
 
 def my_hash(data: str) -> str:
     """
-    Custom hash function that generates a 64-character hexadecimal hash (256 bits).
-    Uses a multi-state mixing algorithm with rotation and XOR operations.
-    
-    Args:
-        data: Input string to hash
-        
-    Returns:
-        64-character hexadecimal hash string
+    Hash function that generates a 64-character hexadecimal hash (256 bits).
+    Args:data: Input string to hash
+    Returns: 64-character hexadecimal hash string
     """
     # Initialize four 64-bit states
     a = 0x1A2B3C4D5E6F7788

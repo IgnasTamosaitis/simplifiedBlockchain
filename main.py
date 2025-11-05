@@ -4,7 +4,7 @@ from models.blockchain import Blockchain
 def main():
     """Run the blockchain simulation."""
     print("=" * 60)
-    print("BLOCKCHAIN v0.2 - Simplified Implementation")
+    print("BLOCKCHAIN v0.2")
     print("=" * 60)
     print()
     

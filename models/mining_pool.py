@@ -10,9 +10,7 @@ class CandidateBlock:
     
     def __init__(self, block: Block, miner_id: int):
         """
-        Initialize a candidate block.
-        
-        Args:
+
             block: The block to mine
             miner_id: ID of the miner
         """
@@ -34,9 +32,6 @@ class MiningPool:
     
     def __init__(self, num_candidates: int = 5):
         """
-        Initialize mining pool.
-        
-        Args:
             num_candidates: Number of candidate blocks to create
         """
         self.num_candidates = num_candidates
@@ -112,14 +107,6 @@ class MiningPool:
     ) -> Optional[CandidateBlock]:
         """
         Mine candidate blocks competitively with time limit.
-        
-        Args:
-            candidates: List of candidate blocks
-            time_limit: Maximum time in seconds per mining round
-            max_attempts_per_round: Max attempts per candidate per round
-            
-        Returns:
-            Winning CandidateBlock or None if none found
         """
         print(f"[MINING] Starting competitive mining...")
         print(f"[MINING] Time limit: {time_limit}s per round")
