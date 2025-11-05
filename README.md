@@ -394,7 +394,7 @@ print(block.get_hash())
 
 ```
 
-
+---
 ## AI pagalbos panaudojimas
 
 Projekte buvo naudojama AI (ChatGPT / Copilot) pagalba, tačiau tik kaip papildomas įrankis, o ne pagrindinis kūrimo šaltinis.
@@ -419,7 +419,7 @@ Projekte buvo naudojama AI (ChatGPT / Copilot) pagalba, tačiau tik kaip papildo
 - Testavimas ir rezultatų analizė
 - Galutinių sprendimų priėmimas bei parametrų parinkimas
 
-
+---
 ## Papildomos užduotys
 
 **Lygiagretus blokų kasimo proceso realizavimas v0.2 versijoje (+0.5 balo)**:
