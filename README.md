@@ -98,8 +98,6 @@ Blokų informacija spausdinama kas kartą, kai blokas iškasamas:
 
 ## Programos veikimas
 
-## ✅ Kaip veikia programa (trumpas paaiškinimas)
-
 Programa imituoja supaprastintą Bitcoin tipo blokų grandinę. Viskas vyksta tokia tvarka:
 
 1. **Sukuriama blockchain sistema**
